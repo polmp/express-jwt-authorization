@@ -1,5 +1,6 @@
 # Express JWT Authorization
 
+[![Build Status](https://travis-ci.com/polmp/express-jwt-authorization.svg?branch=master)](https://travis-ci.com/polmp/express-jwt-authorization)
 [![Code Style](https://badgen.net/badge/code%20style/airbnb/ff5a5f?icon=airbnb)](https://github.com/airbnb/javascript)
 
 Simple middleware that allows protecting routes for a specific role or permission based on [express-jwt-permissions](https://github.com/MichielDeMey/express-jwt-permissions) approach.
