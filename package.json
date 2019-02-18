@@ -1,0 +1,29 @@
+{
+  "name": "express-jwt-authorization",
+  "version": "1.0.0",
+  "description": "Express middleware for handling JWT permissions",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/polmp/express-jwt-authorization.git"
+  },
+  "keywords": [
+    "authorization",
+    "jwt",
+    "roles",
+    "actions",
+    "acl"
+  ],
+  "author": "Pol Moreno <pol.moreno30@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/polmp/express-jwt-authorization/issues"
+  },
+  "homepage": "https://github.com/polmp/express-jwt-authorization#readme",
+  "devDependencies": {
+    "jest": "^24.1.0"
+  }
+}
