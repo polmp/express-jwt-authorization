@@ -82,6 +82,7 @@ new jwtAuth(
   }},
 );
 ```
+Note that if ``getDecodedPayload`` is defined, ``userParameter`` will be ignored.
 
 All the errors that can occur will be passed to Express default error handler.
 

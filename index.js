@@ -8,10 +8,17 @@ function JWTAuthorization(permissions, options) {
   this.options = Object.assign(defaults, options);
   this.permissions = permissions;
   this._getDecodedPayload = function(req) {
+    let decodedPayload;
     if (typeof this.options.getDecodedPayload === 'function') {
-      return this.options.getDecodedPayload(req);
+      decodedPayload = this.options.getDecodedPayload(req);
+    } else {
+      decodedPayload = req[this.options.userParameter];
     }
-    return req[this.options.userParameter];
+
+    if (decodedPayload === undefined) {
+      throw new Error('Payload is not defined');
+    }
+    return decodedPayload;
   };
 }
 
@@ -23,14 +30,6 @@ JWTAuthorization.prototype.checkRole = function(role) {
     } catch (err) {
       return next(err);
     }
-    if (userPayload === undefined)
-      return next(
-        new Error(
-          `'${
-            this.options.userParameter
-          }' field not defined in the decoded payload`,
-        ),
-      );
     const userRole = userPayload[this.options.roleParameter];
     if (userRole === undefined)
       return next(

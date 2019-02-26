@@ -42,9 +42,7 @@ test('Check if userParameter option works correctly', () => {
   try {
     authorization.checkRole('admin')(req, res, middleware);
   } catch (err) {
-    expect(err.message).toBe(
-      `'custom_user' field not defined in the decoded payload`,
-    );
+    expect(err.message).toBe('Payload is not defined');
   }
 });
 
