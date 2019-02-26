@@ -7,11 +7,22 @@ function JWTAuthorization(permissions, options) {
   };
   this.options = Object.assign(defaults, options);
   this.permissions = permissions;
+  this._getDecodedPayload = function(req) {
+    if (typeof this.options.getDecodedPayload === 'function') {
+      return this.options.getDecodedPayload(req);
+    }
+    return req[this.options.userParameter];
+  };
 }
 
 JWTAuthorization.prototype.checkRole = function(role) {
   return function(req, res, next) {
-    const userPayload = req[this.options.userParameter];
+    let userPayload;
+    try {
+      userPayload = this._getDecodedPayload(req);
+    } catch (err) {
+      return next(err);
+    }
     if (userPayload === undefined)
       return next(
         new Error(
@@ -59,8 +70,13 @@ JWTAuthorization.prototype.checkPermission = function(requestedPermissions) {
   };
 
   return function(req, res, next) {
-    const userRole =
-      req[this.options.userParameter][this.options.roleParameter];
+    let userPayload;
+    try {
+      userPayload = this._getDecodedPayload(req);
+    } catch (err) {
+      return next(err);
+    }
+    const userRole = userPayload[this.options.roleParameter];
     const rolePermissions = this.permissions[userRole];
     const result = requestedPermissions.some(permission => {
       if (permission.constructor === String)

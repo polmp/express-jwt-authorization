@@ -68,6 +68,23 @@ new jwtAuth(
 );
 ```
 
+In case you've built your own JWT verificator, pass the function using ``getDecodedPayload`` parameter.
+
+```javascript
+new jwtAuth(
+  {
+    admin: ['recoverPassword', 'generateToken'],
+    user: ['recoverPassword', 'changePassword'],
+  },
+  { getDecodedPayload: function(req){
+    const token = req.headers.authorization.split(' ')[1];
+    return decodeJWT(token);
+  }},
+);
+```
+
+All the errors that can occur will be passed to Express default error handler.
+
 ## Main usage
 
 ### Check if a role is allowed to access a particular resource

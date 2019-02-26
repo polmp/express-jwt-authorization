@@ -59,3 +59,10 @@ typings/
 
 # next.js build output
 .next
+
+#Eslint and Prettier files
+.eslintrc.json
+.prettierrc
+
+#Visual Studio Workspace
+.vscode

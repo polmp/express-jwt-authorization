@@ -48,6 +48,28 @@ test('Check if userParameter option works correctly', () => {
   }
 });
 
+test('Test getDecodedToken function', () => {
+  const getDecodedPayload = req => ({ id: '1', role: 'admin' });
+  authorization = new AuthorizationJWT(samplePermissions, {
+    getDecodedPayload,
+  });
+  expect(
+    authorization.checkRole('admin')(req, res, middleware),
+  ).toBeUndefined();
+});
+
+test('Test getDecodedToken function (expect fail)', () => {
+  const getDecodedPayload = req => ({ id: '1', role: 'admin' });
+  authorization = new AuthorizationJWT(samplePermissions, {
+    getDecodedPayload,
+  });
+  try {
+    authorization.checkRole('client')(req, res, middleware);
+  } catch (err) {
+    expect(err.code).toBe('role_not_allowed');
+  }
+});
+
 test('Is a role allowed to access a resource check by role (expect fail)', () => {
   authorization = new AuthorizationJWT(samplePermissions);
   try {
