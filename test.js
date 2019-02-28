@@ -17,7 +17,6 @@ const res = {};
 const req = { user: { role: 'user' } };
 const middleware = (err, _req, _res, _next) => {
   if (err) throw err;
-  return 'OK';
 };
 
 let authorization;

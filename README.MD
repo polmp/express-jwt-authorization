@@ -82,7 +82,9 @@ new jwtAuth(
   }},
 );
 ```
-Note that if ``getDecodedPayload`` is defined, ``userParameter`` will be ignored.
+
+``getDecodedPayload`` should return the payload. The library will automatically add it in the request object.
+If the token is not specified, the function should return **null**.
 
 All the errors that can occur will be passed to Express default error handler.
 
