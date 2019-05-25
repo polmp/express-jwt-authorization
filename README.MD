@@ -68,7 +68,7 @@ new jwtAuth(
 );
 ```
 
-In case you've built your own JWT verificator, pass the function using ``getDecodedPayload`` parameter.
+In case you've built your own JWT verificator, pass the function using `getDecodedPayload` parameter.
 
 ```javascript
 new jwtAuth(
@@ -76,15 +76,17 @@ new jwtAuth(
     admin: ['recoverPassword', 'generateToken'],
     user: ['recoverPassword', 'changePassword'],
   },
-  { getDecodedPayload: function(req){
-    const token = req.headers.authorization.split(' ')[1];
-    return decodeJWT(token);
-  }},
+  {
+    getDecodedPayload: function(req) {
+      const token = req.headers.authorization.split(' ')[1];
+      return decodeJWT(token);
+    },
+  },
 );
 ```
 
-``getDecodedPayload`` should return the payload. The library will automatically add it in the request object.
-If the token is not specified, the function should return **null**.
+`getDecodedPayload` should return the payload. The library will automatically add it in the request object.
+If the token is not specified or is incorrect, the function should return **null**.
 
 All the errors that can occur will be passed to Express default error handler.
 
@@ -100,6 +102,19 @@ app.use(jwtAuth.checkRole('admin'));
 ### Check if a user has particular permissions based on role
 
 Of course, a permission can be set for different roles. If you need to distinguish between roles for a particular use, just check the `req.user.role` variable.
+
+### Allow guest
+
+If you have a route that allows both non authenticated and authenticated users, use the **decode** function and check if it's logged using **isAuth**.
+
+```javascript
+router.get('/', jwtAuth.decode(), (req, res) => {
+  if (jwtAuth.isAuth(req, 'user'))
+    return res.status(200).send('You are a logged user!');
+  else
+    return res.status(200).send('You are a guest!');
+});
+```
 
 - Simple string
 
