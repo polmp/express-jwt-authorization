@@ -7,6 +7,7 @@ function JWTAuthorization(permissions, options) {
   };
   this.options = Object.assign(defaults, options);
   this.permissions = permissions;
+  
   this._getDecodedPayload = function(req) {
     let decodedPayload;
     if (typeof this.options.getDecodedPayload === 'function') {
@@ -15,37 +16,81 @@ function JWTAuthorization(permissions, options) {
       decodedPayload = req[this.options.userParameter];
     }
 
-    if (decodedPayload === undefined) {
-      throw new Error('Payload is not defined');
-    } else if (decodedPayload === null) {
-      throw new UnauthorizedError('token_not_specified', 'Token is not specified');
+    if (decodedPayload === null) {
+      throw new UnauthorizedError(
+        'token_not_specified',
+        'Token is not specified',
+      );
     }
     return decodedPayload;
   };
-  this._userObjNotInReq = function(req){
-    return Object.is(req[this.options.userParameter],undefined);
-  }
+
+  this._setDecodedPayload = function(req) {
+    let decodedPayload;
+    try {
+      decodedPayload = this._getDecodedPayload(req);
+    } catch (err) {
+      throw err;
+    }
+
+    if (typeof decodedPayload === 'undefined') return;
+
+    const userRole = decodedPayload[this.options.roleParameter];
+    if (typeof userRole === 'undefined')
+      throw new UnauthorizedError(
+        'missing_field',
+        `'${
+          this.options.roleParameter
+        }' field not defined in the decoded payload`,
+      );
+
+    if (this._userObjNotInReq(req))
+      req[this.options.userParameter] = decodedPayload;
+  };
+
+  this._userObjNotInReq = function(req) {
+    return Object.is(req[this.options.userParameter], undefined);
+  };
+
+  this.isAuth = (req, role) => {
+    if (typeof req === 'undefined')
+      throw new UnauthorizedError(
+        'missing_parameter',
+        'Missing request parameter',
+      );
+    if (typeof role === 'undefined')
+      throw new UnauthorizedError(
+        'missing_parameter',
+        'Missing role parameter',
+      );
+
+    if (req[this.options.userParameter])
+      return (
+        req[this.options.userParameter][this.options.roleParameter] === role
+      );
+
+    return false;
+  };
 }
 
 JWTAuthorization.prototype.checkRole = function(role) {
   return function(req, res, next) {
-    let userPayload;
     try {
-      userPayload = this._getDecodedPayload(req);
+      this._setDecodedPayload(req);
     } catch (err) {
       return next(err);
     }
-    const userRole = userPayload[this.options.roleParameter];
-    if (userRole === undefined)
-      return next(
-        new Error(
-          `'${
-            this.options.roleParameter
-          }' field not defined in the decoded payload`,
-        ),
+
+    const decodedPayload = req[this.options.userParameter];
+    if (typeof decodedPayload === 'undefined')
+      throw new UnauthorizedError(
+        'undefined_payload',
+        'Payload is not defined',
       );
+
+    const userRole = decodedPayload[this.options.roleParameter];
+
     if (userRole === role) {
-      if(this._userObjNotInReq(req)) req[this.options.userParameter] = userPayload; // Set user object if needed
       return next();
     } else {
       return next(
@@ -58,12 +103,26 @@ JWTAuthorization.prototype.checkRole = function(role) {
   }.bind(this);
 };
 
+JWTAuthorization.prototype.decode = function() {
+  return function(req, res, next) {
+    try {
+      this._setDecodedPayload(req);
+    } catch (err) {
+      return next(err);
+    }
+    return next();
+  }.bind(this);
+};
+
 JWTAuthorization.prototype.checkPermission = function(requestedPermissions) {
   if (
     requestedPermissions.constructor !== Array &&
     requestedPermissions.constructor !== String
   ) {
-    throw new Error('Permission needs to be an array or a string');
+    throw new UnauthorizedError(
+      'incorrect_format',
+      'Permission needs to be an array or a string',
+    );
   }
 
   if (requestedPermissions.constructor === String) {
@@ -77,13 +136,18 @@ JWTAuthorization.prototype.checkPermission = function(requestedPermissions) {
   };
 
   return function(req, res, next) {
-    let userPayload;
     try {
-      userPayload = this._getDecodedPayload(req);
+      this._setDecodedPayload(req);
     } catch (err) {
       return next(err);
     }
-    const userRole = userPayload[this.options.roleParameter];
+    const decodedPayload = req[this.options.userParameter];
+    if (typeof decodedPayload === 'undefined')
+      throw new UnauthorizedError(
+        'undefined_payload',
+        'Payload is not defined',
+      );
+    const userRole =decodedPayload[this.options.roleParameter];
     const rolePermissions = this.permissions[userRole];
     const result = requestedPermissions.some(permission => {
       if (permission.constructor === String)
@@ -91,7 +155,6 @@ JWTAuthorization.prototype.checkPermission = function(requestedPermissions) {
       return processArray(permission, rolePermissions);
     });
     if (result) {
-      if(this._userObjNotInReq(req)) req[this.options.userParameter] = userPayload;
       return next();
     } else {
       return next(

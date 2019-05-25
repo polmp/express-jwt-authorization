@@ -14,7 +14,7 @@ const samplePermissions = {
 
 // Simulate req and res objects
 const res = {};
-const req = { user: { role: 'user' } };
+let req = { user: { role: 'user' } };
 const middleware = (err, _req, _res, _next) => {
   if (err) throw err;
 };
@@ -46,16 +46,16 @@ test('Check if userParameter option works correctly', () => {
 });
 
 test('Test getDecodedToken function', () => {
+  req = {}; // Set for allowing to edit by reference
   const getDecodedPayload = req => ({ id: '1', role: 'admin' });
-  authorization = new AuthorizationJWT(samplePermissions, {
-    getDecodedPayload,
-  });
+  authorization = new AuthorizationJWT(samplePermissions, {getDecodedPayload});
   expect(
     authorization.checkRole('admin')(req, res, middleware),
   ).toBeUndefined();
 });
 
 test('Test getDecodedToken function (expect fail)', () => {
+  req = {};
   const getDecodedPayload = req => ({ id: '1', role: 'admin' });
   authorization = new AuthorizationJWT(samplePermissions, {
     getDecodedPayload,
@@ -171,4 +171,40 @@ test('Test chaining permissions using and/or (expect success)', () => {
       ['changePassword', 'changeEmail'],
     ])(req, res, middleware),
   ).toBeUndefined();
+});
+
+test('Decode without setting a payload', () => {
+  const middleware = (err)=>{
+    expect(err).toBeUndefined();
+  };
+  req = {};
+  authorization = new AuthorizationJWT(samplePermissions, {});
+  authorization.decode()(req,res,middleware);
+});
+
+test('Decode middleware', () => {
+  const getDecodedPayload = req => ({ id: '5', role: 'user' });
+  const middleware = (err)=>{
+    expect(err).toBeUndefined();
+  };
+  req = {};
+  authorization = new AuthorizationJWT(samplePermissions, {getDecodedPayload});
+  authorization.decode()(req,res,middleware);
+});
+
+test('Call isAuth when no decoded payload available', () => {
+  req={};
+  authorization = new AuthorizationJWT(samplePermissions);
+  authorization.decode()(req,res,err=>{
+    expect(authorization.isAuth(req,'admin')).toBe(false);
+  })
+});
+
+test('Call isAuth (expect success)', () => {
+  req={};
+  const getDecodedPayload = req => ({ id: '10', role: 'user' });
+  authorization = new AuthorizationJWT(samplePermissions,{getDecodedPayload});
+  authorization.decode()(req,res,err=>{
+    expect(authorization.isAuth(req,'user')).toBe(true);
+  });
 });
